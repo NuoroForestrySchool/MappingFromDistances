@@ -1,0 +1,70 @@
+---
+title: "MbIM Map by interdistance measures - applied to trees"
+output: html_notebook
+---
+
+# Residui collegati alla tabella Dendro, eliminati dal procedimento generale
+
+-- Table: Dendro
+CREATE TABLE Dendro (
+    ID,
+    [Specie ],
+    c_130,
+    h_tot,
+    d_130
+);
+
+-- View: CIBR   ??? compute 'dbh corrected distance'
+CREATE VIEW CIBR AS
+    SELECT m.m_id AS m_id,
+           m.[from] AS [from],
+           m.[to] AS [to],
+           m.dist AS dist,
+           m.d_130_from AS d_130_from,
+           m.d_130_to AS d_130_to,
+           0.005 * (ifnull(m.d_130_from, 0) + ifnull(m.d_130_to, 0) ) AS [offset],
+           m.dist + 0.005 * (ifnull(m.d_130_from, 0) + ifnull(m.d_130_to, 0) ) AS corrected_dist
+      FROM (
+               SELECT a.m_id,
+                      a.[from],
+                      a.[to],
+                      a.dist,
+                      a.d_130 AS d_130_from,
+                      b.d_130 AS d_130_to
+                 FROM (
+                          SELECT a0.m_id,
+                                 a0.[from],
+                                 a0.[to],
+                                 a0.dist,
+                                 b0.d_130
+                            FROM Interdistances a0
+                                 LEFT JOIN
+                                 (
+                                     SELECT ID,
+                                            d_130
+                                       FROM Dendro
+                                      WHERE ID NOT IN (
+                                                SELECT ID
+                                                  FROM Dendro
+                                                 GROUP BY ID
+                                                HAVING count( * ) > 1
+                                            )
+                                 )
+                                 b0 ON a0.[from] = b0.ID
+                      )
+                      a
+                      LEFT JOIN
+                      (
+                          SELECT ID,
+                                 d_130
+                            FROM Dendro
+                           WHERE ID NOT IN (
+                                     SELECT ID
+                                       FROM Dendro
+                                      GROUP BY ID
+                                     HAVING count( * ) > 1
+                                 )
+                      )
+                      b ON a.[to] = b.ID
+           )
+           m;

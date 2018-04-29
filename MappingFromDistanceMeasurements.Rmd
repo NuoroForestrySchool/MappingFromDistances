@@ -1,0 +1,46 @@
+---
+title: "Mapping from ditance measurement"
+output: html_notebook
+---
+
+CREATE TABLE distances
+( from_p character(1) NOT NULL,
+  to_p character(1) NOT NULL,
+  dist numeric(5,2) NOT NULL,
+  left_tri_vertex character(1),
+  right_tri_vertex character(1),
+  CONSTRAINT distances_pkey PRIMARY KEY (from_p, to_p),
+  CONSTRAINT distances_check CHECK (from_p < to_p)
+);
+COMMENT ON TABLE distances IS 
+			'input of distances and triangles orientation';
+
+CREATE TABLE points
+( point_id character(1) NOT NULL,
+  point_x real,
+  point_y real,
+  comment character varying(30),
+  CONSTRAINT points_pkey PRIMARY KEY (point_id)
+);
+COMMENT ON TABLE points IS 
+			'output points list and coordinates';
+ 
+
+Il procedimento, in breve, segue questo ciclo.
+1 - Selezione dei "triangoli risolvibili" - dati dalle terne di punti che presentano le seguenti caratteristiche:
+- sono note le coordinate di due suoi vertici
+- non sono note quelle del vertice di chiusura
+- sono note le distanze tra i primi e il vertice di chiusura
+- è noto in quale dei due semipiani definiti dalla retta passante per i punti di coordinate note, giace il vertice di chiusura.
+2 - Calcolo coordinate vertice di chiusura
+3 - Aggiornamento tabella coordinate note.
+4 - Finché c'è ne sono, si torna a cercare nuovi "triangoli risolvibili" ==> 1
+
+. 
+
+```{r}
+library(tidyverse)
+
+
+```
+
